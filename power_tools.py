@@ -253,6 +253,18 @@ _GPS_GAP_S = 3          # no NMEA for this long = the receiver stopped talking
 gps_provider = None
 
 
+def _sysfs_temp_c():  # opi-port: non-Pi temperature source
+    best = None
+    for z in glob.glob('/sys/class/thermal/thermal_zone*/temp'):
+        try:
+            with open(z) as f:
+                c = int(f.read().strip()) / 1000.0
+            best = c if best is None else max(best, c)
+        except (OSError, ValueError):
+            pass
+    return round(best, 1) if best is not None else None
+
+
 def _sample():
     s = {'t': time.time(), 'input_v': None, 'board_w': None,
          'temp_c': None, 'throttled': None}
@@ -269,6 +281,8 @@ def _sample():
     m = re.search(r'([\d.]+)', t or '')
     if m:
         s['temp_c'] = float(m.group(1))
+    if s['temp_c'] is None:  # opi-port: thermal fallback
+        s['temp_c'] = _sysfs_temp_c()
     t = _run(['vcgencmd', 'get_throttled'])
     m = re.search(r'0x([0-9a-fA-F]+)', t or '')
     if m:

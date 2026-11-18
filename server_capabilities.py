@@ -243,7 +243,7 @@ class ServerCapabilities:
                             return
                     
                     # Only mark as Pi Zero if explicitly a Zero model
-                    if 'zero' in model:
+                    if 'zero' in model and 'raspberry' in model:  # opi-port: Pi Zero only
                         self.capabilities.is_pi_zero = True
                         return
             
